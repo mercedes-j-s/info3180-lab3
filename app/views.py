@@ -7,6 +7,9 @@ This file creates your application.
 
 from app import app
 from flask import render_template, request, redirect, url_for, flash
+from app import mail
+from flask_mail import Message
+from .forms import ContactForm
 
 
 ###
@@ -22,7 +25,32 @@ def home():
 @app.route('/about/')
 def about():
     """Render the website's about page."""
-    return render_template('about.html', name="Mary Jane")
+    return render_template('about.html', name="Mercedes")
+
+@app.route('/contact', methods = ['GET', 'POST'])
+def contact():
+    """Render the Contact Form"""
+    form = ContactForm()
+    if request.method == "POST":
+        if form.validate_on_submit():
+            name = form.name.data
+            email = form.email.data
+            subject = form.subject.data
+            message = form.message.data
+
+            msg = Message(subject, sender=(name, email), recipients=["to@example.com"])
+
+            msg.body = message 
+            mail.send(msg)
+
+            flash("Email sent", "success")
+            return redirect(url_for('home'))
+        else:
+            flash("Please fill out the required fields.")
+            flash_errors(form)
+
+    return render_template('contact.html', form = form)
+
 
 
 ###
@@ -64,6 +92,8 @@ def page_not_found(error):
     """Custom 404 page."""
     return render_template('404.html'), 404
 
+
+app.secret_key = "super secret key"
 
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0", port="8080")
